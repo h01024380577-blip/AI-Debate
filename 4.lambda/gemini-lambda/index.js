@@ -21,11 +21,28 @@ exports.handler = async (event) => {
     const model = genAI.getGenerativeModel({
       model: MODEL_ID,
       systemInstruction: system,
-      generationConfig: { temperature: 0.85, maxOutputTokens: 400 }
+      generationConfig: {
+        temperature: 0.85,
+        maxOutputTokens: 2048,
+        // Disable Gemini 2.5 Flash's internal thinking budget so the full
+        // maxOutputTokens goes to the visible response. Without this, the
+        // model silently spends most of the budget on hidden reasoning and
+        // truncates mid-sentence (observed: '...빠른 조리 시간'과' cut-off).
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     });
 
     const result = await model.generateContent(user);
+    const candidate = result.response.candidates?.[0];
+    const finishReason = candidate?.finishReason;
     const content = result.response.text().trim();
+    if (!content || finishReason !== 'STOP') {
+      console.warn('[gemini-lambda] suspicious response', {
+        finishReason,
+        length: content.length,
+        preview: content.slice(0, 60)
+      });
+    }
     return jsonResponse(200, { content });
   } catch (err) {
     console.error('[gemini-lambda] error', err);
