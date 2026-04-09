@@ -193,7 +193,6 @@ Nxt-Classic-Architecture-v2/
 │   ├── gemini-lambda/    Node.js Lambda — Google Gemini
 │   ├── bedrock-lambda/   Python Lambda — AWS Bedrock Nova
 │   └── DropTable.md      DB 수동 리셋 스니펫
-├── docs/                 보조 문서 (데모 가이드, 기획안)
 └── README.md             (이 파일)
 ```
 
@@ -247,6 +246,20 @@ idle
 
 ---
 
-## 📸 데모 & 스크린샷
+## 📸 데모
 
-데모 캡처 가이드: [`docs/demo.md`](docs/demo.md) — 화면별 스크린샷 목록, `curl` 기반 API 플로우, 화면 녹화 팁.
+최종 배포 주소: http://kmucloud-25-debate-s3.s3-website-us-east-1.amazonaws.com
+
+`curl`로 API 플로우만 빠르게 확인하려면:
+
+```bash
+# 1) 세션 생성
+curl -X POST http://54.163.49.191:4000/api/debate/start \
+  -H "Content-Type: application/json" \
+  -d '{"topic":"아침 식사로 빵 vs 밥","positionA":"빵","positionB":"밥"}'
+
+# 2) 응답에서 sessionId 복사 후 opening
+curl -X POST http://54.163.49.191:4000/api/debate/<sessionId>/turn \
+  -H "Content-Type: application/json" \
+  -d '{"action":"opening"}'
+```
