@@ -9,6 +9,9 @@
 __pycache__/
 *.pyc
 
+# Superpowers brainstorming visual companion
+.superpowers/
+
 # Logs
 logs
 *.log
