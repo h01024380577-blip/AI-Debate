@@ -93,20 +93,6 @@ http://kmucloud-25-debate-s3.s3-website-us-east-1.amazonaws.com
 
 ---
 
-## 🧪 테스트 (코드 레벨)
-
-```bash
-# 서버 단위 테스트 (상태머신, 세션, 라우트) — Lambda 호출 mock
-cd AI-Debate/server && npm test
-
-# Gemini Lambda 프롬프트 빌더 테스트
-cd AI-Debate/gemini-lambda && npm test
-```
-
-**서버 테스트는 인터넷/AWS 크리덴셜 없이 실행됩니다** — Lambda 호출을 전부 mock 처리하기 때문입니다.
-
----
-
 ## 📂 리포지토리 구조
 
 ```
