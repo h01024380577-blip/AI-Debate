@@ -24,7 +24,7 @@ def lambda_handler(event, context):
             ],
             inferenceConfig={
                 "temperature": 0.85,
-                "maxTokens": 400,
+                "maxTokens": 1024,
             },
         )
 
