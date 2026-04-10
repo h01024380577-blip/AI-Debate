@@ -85,101 +85,22 @@
 
 ## ▶️ 실행 방법
 
-### (A) 이미 배포된 서비스 사용 — 가장 빠름
-
 아무 설정 없이 바로 접속:
 ```
 http://kmucloud-25-debate-s3.s3-website-us-east-1.amazonaws.com
 ```
-
-### (B) 로컬 개발 환경에서 실행
-
-**선행 조건**: Node.js 18+, MySQL 접근 가능한 DB (RDS 또는 로컬 MySQL)
-
-```bash
-# 1. 저장소 clone
-git clone https://github.com/h01024380577-blip/AI-Debate.git
-cd AI-Debate
-
-# 2. 서버 설치 + .env 작성
-cd AI-Debate/server
-cat > .env <<'EOF'
-PORT=4000
-GEMINI_LAMBDA_URL=https://<your-gemini-lambda>.lambda-url.us-east-1.on.aws/
-BEDROCK_LAMBDA_URL=https://<your-bedrock-lambda>.lambda-url.us-east-1.on.aws/
-DB_HOST=<rds-endpoint>
-DB_PORT=3306
-DB_USER=<user>
-DB_PASSWORD=<password>
-DB_NAME=<database>
-EOF
-npm install
-
-# 3. DB 스키마 생성 (최초 1회)
-node scripts/run-init-db.js
-# → "✅ debate_results table exists." 확인
-
-# 4. 서버 실행 (포어그라운드)
-npm run dev                    # http://localhost:4000
-curl http://localhost:4000/health   # {"ok":true}
-
-# 5. 새 터미널에서 클라이언트 실행
-cd ../client
-npm install
-npm start                      # http://localhost:3000
-```
-
-로컬에선 `client/package.json`의 `"proxy": "http://localhost:4000"` 덕분에 `/api/*` 호출이 자동으로 서버로 프록시됩니다.
-
-### (C) AWS에 직접 배포
-
-1. **RDS**: MySQL 인스턴스 생성, 보안 그룹에서 EC2 SG → 3306 허용
-2. **Lambda (gemini-lambda)**:
-   - Node.js 20 런타임
-   - 환경변수: `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-2.0-flash`
-   - Function URL 활성화 (CORS 허용)
-3. **Lambda (bedrock-lambda)**:
-   - Python 3.11 런타임
-   - IAM 실행 역할에 `bedrock:InvokeModel` 권한 (Nova Lite 대상)
-   - Bedrock 콘솔에서 Nova Lite 모델 접근 enable (최초 1회)
-   - Function URL 활성화
-4. **EC2**:
-   ```bash
-   # Amazon Linux 2023
-   sudo dnf install -y git
-   curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-   sudo dnf install -y nodejs
-   git clone https://github.com/h01024380577-blip/AI-Debate.git
-   cd AI-Debate/AI-Debate/server
-   npm install --omit=dev
-   # .env 업로드 (scp 또는 직접 작성)
-   node scripts/run-init-db.js
-   sudo npm i -g pm2
-   pm2 start src/index.js --name debate-server
-   pm2 save && pm2 startup    # 재부팅 자동 시작
-   ```
-   보안 그룹: `22/SSH (내 IP)` + `4000/TCP (0.0.0.0/0)`
-5. **S3 (정적 호스팅)**:
-   ```bash
-   cd AI-Debate/client
-   REACT_APP_API_BASE=http://<EC2-Public-IP>:4000 npm run build
-   aws s3 cp build s3://<your-bucket> --recursive
-   ```
-   버킷 속성에서 "정적 웹사이트 호스팅" 활성화, 퍼블릭 읽기 허용 (버킷 정책).
 
 ---
 
 ## 🧪 테스트 (코드 레벨)
 
 ```bash
-# 서버 단위 테스트 (상태머신, 세션, 라우트) — Lambda 호출 mock
+# 서버 단위 테스트 (상태머신, 세션, 라우트) — Lambda 호출
 cd AI-Debate/server && npm test
 
 # Gemini Lambda 프롬프트 빌더 테스트
 cd AI-Debate/gemini-lambda && npm test
 ```
-
-**서버 테스트는 인터넷/AWS 크리덴셜 없이 실행됩니다** — Lambda 호출을 전부 mock 처리하기 때문입니다.
 
 ---
 
@@ -192,11 +113,10 @@ AI-Debate/                      ← git clone 후 루트
 │   ├── server/           Express — API, 상태머신, DB
 │   ├── gemini-lambda/    Node.js Lambda — Google Gemini
 │   ├── bedrock-lambda/   Python Lambda — AWS Bedrock Nova
-│   └── DropTable.md      DB 수동 리셋 스니펫
 └── README.md             (이 파일)
 ```
 
-각 하위 디렉터리에 자체 README가 있습니다. 전체 맥락을 보려면 **이 파일 → server → client → gemini-lambda → bedrock-lambda** 순서 권장.
+전체 맥락을 보려면 **이 파일 → server → client → gemini-lambda → bedrock-lambda** 순서 권장.
 
 ---
 
@@ -213,7 +133,6 @@ AI-Debate/                      ← git clone 후 루트
 | Lambda Console (gemini-lambda) | `GEMINI_MODEL` | 기본 `gemini-2.0-flash` (무료 1,500 req/day) |
 | Lambda Console (bedrock-lambda) | `BEDROCK_MODEL_ID` | 기본 `amazon.nova-lite-v1:0` |
 
-`.env`는 `.gitignore`에 의해 저장소에서 제외됩니다. **절대 커밋하지 마세요.**
 
 ### 💡 Gemini Lambda 환경변수 변경 방법 (유료 API 키 / 모델 변경)
 
@@ -234,16 +153,6 @@ Gemini 무료 등급은 모델별로 하루 요청 수가 제한됩니다 (`gemi
 
 4. 변경 즉시 적용 — **Lambda 재배포 불필요** (환경변수만 바꾸면 됨)
 
-#### AWS CLI로 변경 (터미널)
-
-```bash
-aws lambda update-function-configuration \
-  --function-name debate-gemini \
-  --region us-east-1 \
-  --environment "Variables={GEMINI_API_KEY=<your-paid-key>,GEMINI_MODEL=gemini-2.5-flash}"
-```
-
-> ⚠️ `--environment`는 **모든 환경변수를 덮어씁니다**. 기존 변수를 유지하려면 전체를 함께 넣어야 합니다.
 
 #### 모델별 무료 한도 참고
 
