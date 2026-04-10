@@ -43,8 +43,8 @@
         │ 1. 정적 파일 요청
         ▼
 ┌─────────────────────────┐
-│   S3 (정적 웹 호스팅)    │  kmucloud-25-debate-s3
-│   React SPA (빌드 결과)  │
+│   S3 (정적 웹 호스팅)       │  kmucloud-25-debate-s3
+│   React SPA (빌드 결과)    │
 └─────────────────────────┘
         │
         │ 2. fetch("http://<EC2-IP>:4000/api/debate/...")
@@ -63,7 +63,7 @@
    │
    └──► Lambda (Node.js 20)
         gemini-lambda ──► Google Gemini API
-                          (gemini-2.0-flash)
+                          (gemini-2.5-flash)
 ```
 
 | AWS 리소스 | 역할 | 설정 요약 |
@@ -98,8 +98,8 @@ http://kmucloud-25-debate-s3.s3-website-us-east-1.amazonaws.com
 
 ```bash
 # 1. 저장소 clone
-git clone https://github.com/h01024380577-blip/Nxt-Classic-Architecture-v2.git
-cd Nxt-Classic-Architecture-v2
+git clone https://github.com/h01024380577-blip/AI-Debate.git
+cd AI-Debate
 
 # 2. 서버 설치 + .env 작성
 cd AI-Debate/server
@@ -149,8 +149,8 @@ npm start                      # http://localhost:3000
    sudo dnf install -y git
    curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
    sudo dnf install -y nodejs
-   git clone https://github.com/h01024380577-blip/Nxt-Classic-Architecture-v2.git
-   cd Nxt-Classic-Architecture-v2/AI-Debate/server
+   git clone https://github.com/h01024380577-blip/AI-Debate.git
+   cd AI-Debate/AI-Debate/server
    npm install --omit=dev
    # .env 업로드 (scp 또는 직접 작성)
    node scripts/run-init-db.js
@@ -186,7 +186,7 @@ cd AI-Debate/gemini-lambda && npm test
 ## 📂 리포지토리 구조
 
 ```
-Nxt-Classic-Architecture-v2/
+AI-Debate/                      ← git clone 후 루트
 ├── AI-Debate/
 │   ├── client/           React (CRA) — 토론 UI
 │   ├── server/           Express — API, 상태머신, DB
